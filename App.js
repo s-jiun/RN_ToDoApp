@@ -1,17 +1,85 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY = '@ToDo';
 
 export default function App() {
   const [isWork, setIsWork] = useState(true);
   const [inputText, setInputText] = useState("");
   const [toDos, setToDos] = useState({});
 
+  useEffect(() => {getData();}, []);
+
   const onPressWork = () => setIsWork(true);
   const onPressTravel = () => setIsWork(false);
+  const storeDataAlert = () =>
+    Alert.alert(
+      "Error",
+      "Can't store data",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "Retry", onPress: () => storeToDos(toDos) }
+      ]
+    );
+
+    const getDataAlert = () =>
+    Alert.alert(
+      "Error",
+      "Can't read data",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "Retry", onPress: () => getData }
+      ]
+    );
+  
+    const storeToDos = async (value) => {
+    try {
+      const jsonValue = JSON.stringify(value)
+      await AsyncStorage.setItem(STORAGE_KEY, jsonValue)
+    } catch (e) {storeDataAlert}
+  }
+  
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY)
+      setToDos(JSON.parse(jsonValue))
+    } catch(e) {getDataAlert }
+  }
+
   const onSubmit = async () =>{
     const newToDo = {...toDos, [Date.now()]: {inputText, isWork}};
     setToDos(newToDo);
+    await storeToDos(newToDo);
+    setInputText("");
+  }
+
+  const deleteToDo = (key) => {
+    Alert.alert(
+      "Delete",
+      "Sure to delete data?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "OK", 
+          onPress: () => {
+          const newToDo = {...toDos}
+          delete newToDo[key]
+          setToDos(newToDo)
+          storeToDos(newToDo)
+        } }
+      ]
+    )
   }
 
   return (
@@ -31,9 +99,26 @@ export default function App() {
         />
       </View>
       <ScrollView>
-        {Object.keys(toDos).map((key) => (
-          <Text key={key} style={{color: 'white'}}>{toDos[key].inputText}</Text>
-        ))}
+        {isWork ? 
+          Object.keys(toDos).map((key) => (
+            toDos[key].isWork ? 
+            <View key={key} style={styles.toDos}>
+              <Text style={{color: 'white'}}>{toDos[key].inputText}</Text>
+              <TouchableOpacity onPress={() => deleteToDo(key)}>
+                <Ionicons name="trash" size={24} color="lightgrey" />
+              </TouchableOpacity>
+            </View> : null
+          )) : 
+          Object.keys(toDos).map((key) => (
+            toDos[key].isWork ? null : 
+            <View key={key} style={styles.toDos}>
+              <Text style={{color: 'white'}}>{toDos[key].inputText}</Text>
+              <TouchableOpacity onPress={() => deleteToDo(key)}>
+                <Ionicons name="trash" size={24} color="lightgrey" />
+              </TouchableOpacity>
+            </View>
+          ))
+        }
       </ScrollView>
       <StatusBar style="light" />
     </View>
@@ -66,5 +151,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 15
+  },
+  toDos: {
+    flexDirection: 'row',
+    width: '75%',
+    justifyContent: 'space-between',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: 'dimgrey',
+    marginTop: 25,
+    borderRadius: 20,
+    marginLeft: 13
   }
 });
