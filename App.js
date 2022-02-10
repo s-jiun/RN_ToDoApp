@@ -13,6 +13,7 @@ export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalInput, setModalInput] = useState("");
   const [editKey, setEditKey] = useState(null);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {getData();}, []);
 
@@ -31,7 +32,7 @@ export default function App() {
       ]
     );
 
-    const getDataAlert = () =>
+  const getDataAlert = () =>
     Alert.alert(
       "Error",
       "Can't read data",
@@ -64,29 +65,30 @@ export default function App() {
     if(inputText === ""){
       return
     }
-    const newToDo = {...toDos, [Date.now()]: {inputText, isWork}};
+    const newToDo = {...toDos, [Date.now()]: {inputText, isWork, done}};
     setToDos(newToDo);
     await storeToDos(newToDo);
     setInputText("");
   }
 
-  const deleteToDo = (key, toDos, setToDos, storeToDos) => {
+  const deleteToDo = (key) => {
     Alert.alert(
-        "Delete",
-        "Sure to delete data?",
-        [
-            {
-            text: "Cancel",
-            style: "cancel"
-            },
-            { text: "OK", 
-            onPress: () => {
+      "Delete",
+      "Sure to delete data?",
+      [
+        {
+        text: "Cancel",
+        style: "cancel"
+        },
+        { text: "OK", 
+          onPress: () => {
             const newToDo = {...toDos}
             delete newToDo[key]
             setToDos(newToDo)
             storeToDos(newToDo)
-            } }
-        ]
+          } 
+        }
+      ]
     )
   }
 
@@ -103,6 +105,13 @@ export default function App() {
     };
     const newToDo = {...toDos};
     newToDo[editKey].inputText = modalInput;
+    setToDos(newToDo);
+    storeToDos(newToDo);
+  }
+
+  const onPressDone = (key) => {
+    const newToDo = {... toDos};
+    newToDo[key].done = !(newToDo[key].done);
     setToDos(newToDo);
     storeToDos(newToDo);
   }
@@ -127,23 +136,27 @@ export default function App() {
         {isWork ? 
             Object.keys(toDos).map((key) => (
               toDos[key].isWork ? 
-              <View key={key} style={styles.toDos}>
-                <Text style={{color: 'white'}}>{toDos[key].inputText}</Text>
-                <View style={{flexDirection: 'row'}}>
-                  <TouchableOpacity style={styles.icon} onPress={() => edit(key)}>
-                    <Ionicons name="pencil-outline" size={24} color="lightgrey" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.icon} onPress={() => deleteToDo(key)}>
-                      <Ionicons name="trash" size={24} color="lightgrey" />
-                  </TouchableOpacity>
+              (toDos[key].done ? 
+                <View key={key} style={styles.toDos}>
+                  <Text style={styles.done}>{toDos[key].inputText}</Text>
+                  <View style={{flexDirection: 'row'}}>
+                    <TouchableOpacity style={styles.icon} onPress={() => onPressDone(key)}>
+                      <Ionicons name="checkmark" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.icon} onPress={() => edit(key)}>
+                      <Ionicons name="pencil-outline" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.icon} onPress={() => deleteToDo(key)}>
+                        <Ionicons name="trash" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View> : null
-            )) : 
-            Object.keys(toDos).map((key) => (
-              toDos[key].isWork ? null : 
-              <View key={key} style={styles.toDos}>
+              :<View key={key} style={styles.toDos}>
                 <Text style={{color: 'white'}}>{toDos[key].inputText}</Text>
                 <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity style={styles.icon} onPress={() => onPressDone(key)}>
+                    <Ionicons name="checkmark" size={24} color="lightgrey" />
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.icon} onPress={() => edit(key)}>
                     <Ionicons name="pencil-outline" size={24} color="lightgrey" />
                   </TouchableOpacity>
@@ -152,6 +165,40 @@ export default function App() {
                   </TouchableOpacity>
                 </View>
               </View>
+            )
+              : null
+            )) : 
+            Object.keys(toDos).map((key) => (
+              toDos[key].isWork ? null : (toDos[key].done ? 
+                <View key={key} style={styles.toDos}>
+                  <Text style={styles.done}>{toDos[key].inputText}</Text>
+                  <View style={{flexDirection: 'row'}}>
+                    <TouchableOpacity style={styles.icon} onPress={() => onPressDone(key)}>
+                      <Ionicons name="checkmark" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.icon} onPress={() => edit(key)}>
+                      <Ionicons name="pencil-outline" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.icon} onPress={() => deleteToDo(key)}>
+                        <Ionicons name="trash" size={24} color="lightgrey" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              :<View key={key} style={styles.toDos}>
+                <Text style={{color: 'white'}}>{toDos[key].inputText}</Text>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity style={styles.icon} onPress={() => onPressDone(key)}>
+                      <Ionicons name="checkmark" size={24} color="lightgrey" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.icon} onPress={() => edit(key)}>
+                    <Ionicons name="pencil-outline" size={24} color="lightgrey" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.icon} onPress={() => deleteToDo(key)}>
+                      <Ionicons name="trash" size={24} color="lightgrey" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              )
             ))
         }
       </ScrollView>
@@ -200,7 +247,7 @@ const styles = StyleSheet.create({
   input:{
     borderColor: 'gray',
     borderWidth: 1,
-    width: 380,
+    width: 385,
     backgroundColor: 'white',
     marginTop: -40,
     borderRadius: 20,
@@ -209,14 +256,13 @@ const styles = StyleSheet.create({
   },
   toDos: {
     flexDirection: 'row',
-    width: '78%',
+    width: 385,
     justifyContent: 'space-between',
     paddingHorizontal: 30,
     paddingVertical: 15,
     backgroundColor: 'dimgrey',
     marginTop: 25,
-    borderRadius: 20,
-    marginLeft: 13
+    borderRadius: 20
   },
   icon:{
     marginLeft: 7
@@ -270,5 +316,10 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center"
+  }, 
+  done: {
+    textDecorationLine: 'line-through',
+    color: 'white',
+    fontStyle:'italic'
   }
 });
